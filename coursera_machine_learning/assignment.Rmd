@@ -34,7 +34,7 @@ The goal of this project is to predict the manner in which they did the exercise
 library(RCurl)
 library(curl)
 library(data.table)
-setwd("~/Documents/ramesh/coursera/practical_machine_learning")
+setwd("~/Documents/ramesh/coursera/coursera_machine_learning")
 ```
 
 ## Data Acquisition and Loading

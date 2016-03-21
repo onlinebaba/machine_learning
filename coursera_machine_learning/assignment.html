@@ -130,7 +130,7 @@ $(document).ready(function () {
 library(RCurl)
 library(curl)
 library(data.table)
-setwd(&quot;~/Documents/ramesh/coursera/ml&quot;)</code></pre>
+setwd(&quot;~/Documents/ramesh/coursera/practical_machine_learning&quot;)</code></pre>
 </div>
 <div id="data-acquisition-and-loading" class="section level2">
 <h2>Data Acquisition and Loading</h2>
@@ -251,8 +251,8 @@ randomForestAccuracy</code></pre>
 ##                   E    0    0    0    1 1435</code></pre>
 <p>Random Forest modeling gave us an Accuracy of <strong>0.994392</strong>, which is good enough for predicting the test cases.</p>
 </div>
-<div id="course-project-prediction-quiz-portion" class="section level2">
-<h2>Course Project Prediction Quiz Portion</h2>
+<div id="applying-test-cases-on-our-algorithm" class="section level2">
+<h2>Applying test cases on our algorithm</h2>
 <p>We will now apply our machine learning algorithm to the 20 test cases available in the testingDataSet data above.</p>
 <pre class="r"><code>preditionUsingRandomForest &lt;- predict(randomForestFit, testingDataSet, type=&quot;class&quot;)
 # Finally Concatenate vectors after converting to character which will give us the prediction for the test cases
