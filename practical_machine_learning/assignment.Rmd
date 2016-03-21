@@ -1,0 +1,125 @@
+---
+title: 'Practical Machine Language:\nPrediction Assignment Writeup'
+author: "Ramesh L. Nori"
+date: "March 16, 2016"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+## Background
+Using devices such as Jawbone Up, Nike FuelBand, and Fitbit it is now possible to collect a large amount of data about personal activity relatively inexpensively. These type of devices are part of the quantified self movement – a group of enthusiasts who take measurements about themselves regularly to improve their health, to find patterns in their behavior, or because they are tech geeks.
+</br>
+</br>
+More information is available from the website here: <http://groupware.les.inf.puc-rio.br/har> (see the section on the Weight Lifting Exercise Dataset).
+</br>
+</br>
+The training data for this project are available here: <https://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv>
+</br>
+The testing data for this project are available here: <https://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.csv>
+
+
+## Executive Summary
+In this project, my goal will be to use data from accelerometers on the belt, forearm, arm, and dumbell of 6 participants. They were asked to perform barbell lifts correctly and incorrectly in 5 different ways. This writeup describes how the model was build, how the cross validation was used, the expected out of sample error is, and the reasoning behind the choices. Furthermore the prediction model is used to predict 20 different test cases.
+</br>
+</br>
+The goal of this project is to predict the manner in which they did the exercise. This is the "classe" variable in the training set.
+
+## Environment Setup
+```{r warning=FALSE, eval=FALSE, libraries_needed}
+# Load the required libraries
+library(RCurl)
+library(curl)
+library(data.table)
+setwd("~/Documents/ramesh/coursera/practical_machine_learning")
+```
+
+## Data Acquisition and Loading
+```{r warning=FALSE, data_acquisition}
+
+# Download the testing and training files if they arent' already on your working directory
+
+library(data.table)
+
+trainingfile="training.csv" 
+if (!file.exists(trainingfile)) {    
+ trainingFileURL <- "https://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv"   
+    download.file(trainingFileURL, trainingfile, method="auto") 
+}
+
+testingfile="testing.csv" 
+if (!file.exists(testingfile)) {    
+ testingFileURL <- "https://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.csv"   
+    download.file(testingFileURL, testingfile, method="auto")
+}
+
+# Read testing data file
+trainingDataSet <- fread(trainingfile)
+
+# Read training data file
+testingDataSet <- fread(testingfile)
+
+dim(trainingDataSet)
+dim(testingDataSet)
+```
+
+## Data Cleaning
+```{r data_cleaning}
+# Identify all NAs and empty values from the testing data set
+missingOrNAs <- sapply(testingDataSet, function (x) any(is.na(x) | x == ""))
+
+# We are interested in valid data from accelerometers for belt, forearm, arm, and dumbell
+interestedElements <- grepl("belt|[^(fore)]arm|dumbbell|forearm",names(missingOrNAs))
+isPredictorVariable <- (!missingOrNAs & interestedElements)
+validPredictors <- names(missingOrNAs)[isPredictorVariable]
+validPredictors
+
+# From the training data set just select validPredictors. Also include the variable that indicates the manner in which they did the exercise, which is the "classe" variable.
+trainingDataSet <- trainingDataSet[,c("classe",validPredictors), with=FALSE]
+dim(trainingDataSet)
+# List of all predictors variables including "classe" variable
+names(trainingDataSet)
+
+# Convert classe variable into a factor variable, if required
+if(!is.factor(trainingDataSet$classe)){
+  trainingDataSet$classe <- as.factor(trainingDataSet$classe)
+}
+```
+
+Partition the trainingDataSet data further into 60% : 40% between training and validating data set respectively
+```{r warning=FALSE,data_preparation}
+library(lattice)
+library(ggplot2)
+library(caret)
+set.seed(33833)
+inTrain <- createDataPartition(trainingDataSet$classe, p=0.6, list=FALSE)
+training <- trainingDataSet[inTrain,]
+dim(training)
+validating <- trainingDataSet[-inTrain,]
+dim(validating)
+```
+
+
+## Random Forest Training Model
+```{r warning=FALSE, message=FALSE, random_forest_model}
+library(randomForest)
+set.seed(33833)
+randomForestFit <- randomForest(classe ~ ., data=training)
+randomForestPredict <- predict(randomForestFit, validating, type="class")
+randomForestConfusionMatrix <- confusionMatrix(randomForestPredict, validating$classe)
+randomForestAccuracy <- randomForestConfusionMatrix$overall['Accuracy']
+randomForestAccuracy
+table(randomForestPredict,validating$classe)
+```
+Random Forest modeling gave us an Accuracy of **`r randomForestAccuracy `**, which is good enough for predicting the test cases.
+
+## Applying test cases on our algorithm
+We will now apply our machine learning algorithm to the 20 test cases available in the testingDataSet data above.
+``` {r warning=FALSE, message=FALSE, quiz_prediction}
+preditionUsingRandomForest <- predict(randomForestFit, testingDataSet, type="class")
+# Finally Concatenate vectors after converting to character which will give us the prediction for the test cases
+predictionFor20TestCases <- paste(preditionUsingRandomForest)
+```
